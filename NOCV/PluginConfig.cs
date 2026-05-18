@@ -7,6 +7,13 @@ namespace NOCV;
 /// </summary>
 public static class PluginConfig
 {
+    // Buttplug settings
+    internal static ConfigEntry<string> IntifaceUri = null!;
+    private const string DefaultIntifaceUri = "ws://localhost:12345";
+
+    internal static ConfigEntry<float> ButtplugStrength = null!;
+    private const float DefaultButtplugStrength = 1.0f;
+
     internal static ConfigEntry<float> MachMultiplier = null!;
     private const float DefaultMachMultiplier = 1f;
 
@@ -21,7 +28,6 @@ public static class PluginConfig
     private const float DefaultVRSMult = 1f;
     // ReSharper restore InconsistentNaming
     
-
     internal static ConfigEntry<float> BayDoorVibrationValue = null!;
     private const float DefaultBayDoorVibrationValue = 0.25f;
 
@@ -34,7 +40,6 @@ public static class PluginConfig
     internal static ConfigEntry<float> DetachPartVibrationDuration = null!;
     private const float DefaultDetachPartVibrationDuration = 0.1f;
 
-
     internal static ConfigEntry<float> LatchGearVibrationAmount = null!;
     private const float DefaultLatchGearVibrationAmount = 0.4f;
 
@@ -46,8 +51,6 @@ public static class PluginConfig
 
     internal static ConfigEntry<float> GearMovingMax = null!;
     private const float DefaultGearMovingMax = 0.15f;
-
-
 
     internal static ConfigEntry<float> GunFiringAmount = null!;
     private const float DefaultGunFiringAmount = 1f;
@@ -63,6 +66,10 @@ public static class PluginConfig
     
     internal static void InitSettings(ConfigFile config)
     {
+        // Buttplug Bindings
+        IntifaceUri = config.Bind("Buttplug", "Intiface URI", DefaultIntifaceUri, "URI for Intiface Central server.");
+        ButtplugStrength = config.Bind("Buttplug", "Strength Multiplier", DefaultButtplugStrength, "Overall strength multiplier for Buttplug devices (0.0 to 1.0).");
+
         MachMultiplier = config.Bind("Aerodynamics", "Mach mult", DefaultMachMultiplier, "Vibration multiplier for the near-mach effects.");
         AoAMultiplier = config.Bind("Aerodynamics", "AoA multiplier", DefaultAoAMultiplier, "Vibration multiplier for the AoA effects.");
         VRSThreshold = config.Bind("Aerodynamics", "VRS threshold", DefaultVRSThreshold, "Vibration threshold for the VRS effects. Values are between 0 and 1.");
@@ -82,6 +89,5 @@ public static class PluginConfig
         GunFiringDuration = config.Bind("Weaponry", "Gun fire duration", DefaultGunFiringDuration, "Vibration duration for gun fire (in seconds). Triggered for every bullet.");
         MissileFiringAmount = config.Bind("Weapons", "Missile firing", DefaultMissileFiringAmount, "Vibration amount for Missile fire (between 0 and 1).");
         MissileFiringDuration = config.Bind("Weaponry", "Missile fire duration", DefaultMissileFiringDuration, "Vibration duration for Missile fire (in seconds). Triggered for every bullet.");
-
     }
 }
