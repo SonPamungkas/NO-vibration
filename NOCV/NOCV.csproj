@@ -82,10 +82,11 @@
     <ItemGroup>
         <Reference Include="ButtplugManaged">
             <HintPath>lib\ButtplugManaged.dll</HintPath>
+            <Private>True</Private>
         </Reference>
         <Reference Include="plog">
             <HintPath>lib\plog.dll</HintPath>
-        </Reference>
+            <Private>True</Private>
     </ItemGroup>
 
     <!-- Extra Package References -->
