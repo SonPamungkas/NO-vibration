@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using UnityEngine;
 
@@ -64,6 +63,7 @@ public class VibrationService: MonoBehaviour
     {
         var totalHiVib = 0f;
         var totalLowVib = 0f;
+        
         foreach (var channel in _channels.Where(channel => channel.Enabled))
         {
             if(!float.IsPositiveInfinity(channel.Duration))
@@ -77,7 +77,20 @@ public class VibrationService: MonoBehaviour
             totalHiVib += channel.HighAmount;
             totalLowVib += channel.LowAmount;
         }
-        GameManager.playerInput.SetVibration(0, Mathf.Clamp(totalHiVib, 0f, 1f), false);
-        GameManager.playerInput.SetVibration(1, Mathf.Clamp(totalLowVib, 0f, 1f), false);
+
+        // Clamp combined physics vibration signals
+        float hi = Mathf.Clamp(totalHiVib, 0f, 1f);
+        float low = Mathf.Clamp(totalLowVib, 0f, 1f);
+
+        // Standard Unity/Rewired controller rumble
+        GameManager.playerInput.SetVibration(0, hi, false);
+        GameManager.playerInput.SetVibration(1, low, false);
+
+        // Map vibrations out to Buttplug / Intiface Client
+        if (ButtplugManager.Instance != null)
+        {
+            // We combine both frequency bands into a single intensity parameter for the connected haptics device
+            ButtplugManager.Instance.currentSpeed = Mathf.Max(hi, low);
+        }
     }
 }
