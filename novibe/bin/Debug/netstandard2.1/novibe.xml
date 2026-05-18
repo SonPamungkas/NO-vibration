@@ -1,0 +1,292 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>novibe</name>
+    </assembly>
+    <members>
+        <member name="T:NOCV.Features.ButtplugManager">
+            <summary>
+            Connects to Intiface Central and distributes vibration commands to devices.
+            </summary>
+        </member>
+        <member name="T:NOCV.Features.VibrationChannel">
+            <summary>
+            Class for declaring vibration channels for deconfliction.
+            </summary>
+        </member>
+        <member name="F:NOCV.Features.VibrationChannel.LowAmount">
+            <summary>
+            Vibration amount for low intensity rumble
+            </summary>
+        </member>
+        <member name="F:NOCV.Features.VibrationChannel.HighAmount">
+            <summary>
+            Vibration amount for high intensity rumble
+            </summary>
+        </member>
+        <member name="F:NOCV.Features.VibrationChannel.Duration">
+            <summary>
+            Duration the effect on this channel lasts in seconds. 
+            </summary>
+        </member>
+        <member name="P:NOCV.Features.VibrationChannel.Enabled">
+            <summary>
+            Whether this is outputting something
+            </summary>
+        </member>
+        <member name="M:NOCV.Features.VibrationChannel.SetVibration(System.Single,System.Single)">
+            <summary>
+            Sets the vibration for this channel.
+            </summary>
+            <param name="low"></param>
+            <param name="high"></param>
+        </member>
+        <member name="M:NOCV.Features.VibrationChannel.SetVibration(System.Single,System.Single,System.Single)">
+            <summary>
+            Sets the vibration for this channel.
+            </summary>
+            <param name="low"></param>
+            <param name="high"></param>
+            <param name="dur">duration in seconds</param>
+        </member>
+        <member name="M:NOCV.Features.VibrationChannel.setVibrationOnMotorIndex(System.Int32,System.Single)">
+            <summary>
+            Sets vibration motor amount based on vibration motor indices like before
+            </summary>
+            <param name="motor"></param>
+            <param name="magnitude"></param>
+        </member>
+        <member name="M:NOCV.Features.VibrationChannel.Disable">
+            <summary>
+                Disable this channel.
+            </summary>
+        </member>
+        <member name="T:NOCV.Features.VibrationService">
+            <summary>
+                Generic vibration service.
+                This is made to avoid conflicts of several different things trying to set vibration concurrently.
+            </summary>
+        </member>
+        <member name="P:NOCV.Features.VibrationService.Instance">
+            <summary>
+            The current instance of this class in game.
+            </summary>
+        </member>
+        <member name="M:NOCV.Features.VibrationService.Initialize">
+            <summary>
+                Initializes the service.
+            </summary>
+        </member>
+        <member name="M:NOCV.Features.VibrationService.Destroy">
+            <summary>
+                Destroy the vibration service
+            </summary>
+        </member>
+        <member name="M:NOCV.Features.VibrationService.AddChannel(NOCV.Features.VibrationChannel)">
+            <summary>
+            Add a channel to this vibration service
+            </summary>
+            <returns>the new channel. Can be used later to send vibration values.</returns>
+        </member>
+        <member name="M:NOCV.Features.VibrationService.FixedUpdate">
+            <inheritdocs/>
+        </member>
+        <member name="T:NOCV.Helpers.VibChannelUser`1">
+            <summary>
+            Base class for vibration channel users.
+            </summary>
+            <typeparam name="T"></typeparam>
+        </member>
+        <member name="F:NOCV.Helpers.VibChannelUser`1.Channel">
+            <summary>
+                The vibration channel to be used to send vibration events.
+            </summary>
+        </member>
+        <member name="M:NOCV.Helpers.VibChannelUser`1.Setup">
+            <summary>
+            Sets up the vibration feedback by creating a channel in the vibration service.
+            </summary>
+        </member>
+        <member name="T:NOCV.Helpers.VibOnAudioSources">
+            <summary>
+                Starts vibration on audioSource play.
+            </summary>
+        </member>
+        <member name="M:NOCV.Helpers.VibOnAudioSources.Initialize">
+            <summary>
+                Initializes the service.
+            </summary>
+        </member>
+        <member name="M:NOCV.Helpers.VibOnAudioSources.Destroy">
+            <summary>
+                Destroy the vibration service
+            </summary>
+        </member>
+        <member name="M:NOCV.Helpers.VibOnAudioSources.StartPlaying(UnityEngine.AudioSource,System.Int32,System.Single)">
+            <summary>
+                Start playing vibration from an audio source's clip.
+            </summary>
+            <param name="source"></param>
+            <param name="motorIndex"></param>
+            <param name="maxMagnitude"></param>
+            <returns> the given source for transpiler convenience </returns>
+        </member>
+        <member name="T:NOCV.NOCV">
+            <summary>
+            Main plugin class.
+            </summary>
+        </member>
+        <member name="T:NOCV.Patches.AircraftMachPatch">
+            <summary>
+                Adds vibration near mach
+            </summary>
+        </member>
+        <member name="M:NOCV.Patches.AircraftMachPatch.FixedUpdateTranspiler(System.Collections.Generic.IEnumerable{HarmonyLib.CodeInstruction})">
+            <summary>
+                Adds vibration after ShakeAircraft call.
+            </summary>
+            <param name="instructions"></param>
+            <returns></returns>
+        </member>
+        <member name="T:NOCV.Patches.AoAFeedbackPatch">
+            <summary>
+                Patches the AoA feedback class to add vibration feedback.
+            </summary>
+        </member>
+        <member name="M:NOCV.Patches.AoAFeedbackPatch.AoAFeedbackPostfix(Aircraft)">
+            <summary>
+            Main AoA feedback patch (this function alone is like 80% of the feeling of vibration feedback lol)
+            </summary>
+            <param name="aircraft"></param>
+        </member>
+        <member name="T:NOCV.Patches.BayDoorPatches">
+            <summary>
+                Add vibration to bay doors. 
+            </summary>
+        </member>
+        <member name="M:NOCV.Patches.BayDoorPatches.UpdateTranspiler(System.Collections.Generic.IEnumerable{HarmonyLib.CodeInstruction})">
+            <summary>
+            Patches the Update method of the BayDoors in order to add the correct vibrations.
+            </summary>
+            <param name="instructions"></param>
+            <returns></returns>
+        </member>
+        <member name="T:NOCV.Patches.CargoRampPatches">
+            <summary>
+                Add vibration to CargoRamps
+            </summary>
+        </member>
+        <member name="M:NOCV.Patches.CargoRampPatches.OpeningPostfix(CargoRamp)">
+            <summary>
+            Adds vibration to opening of cargoRamps
+            </summary>
+            <param name="__instance"></param>
+        </member>
+        <member name="M:NOCV.Patches.CargoRampPatches.OpenPostfix(CargoRamp)">
+            <summary>
+            Adds vibration to open state of cargoRamps
+            </summary>
+            <param name="__instance"></param>
+        </member>
+        <member name="M:NOCV.Patches.CargoRampPatches.ClosingPostfix(CargoRamp)">
+            <summary>
+            Adds vibration to closing cargoRamps
+            </summary>
+            <param name="__instance"></param>
+        </member>
+        <member name="T:NOCV.Patches.DetachPartPatch">
+            <summary>
+            Adds vibrations when stuff breaks.
+            </summary>
+        </member>
+        <member name="M:NOCV.Patches.DetachPartPatch.DetachPartPrefix(Unit,System.Byte,UnityEngine.Vector3,UnityEngine.Vector3)">
+            <summary>
+            Adds vibration to detach part.
+            </summary>
+            <param name="__instance"></param>
+            <param name="partID"></param>
+            <param name="velocity"></param>
+            <param name="relativePos"></param>
+        </member>
+        <member name="T:NOCV.Patches.GameManagerPatches">
+            <summary>
+            Game manager patches
+            </summary>
+        </member>
+        <member name="M:NOCV.Patches.GameManagerPatches.SetupGamePostfix">
+            <summary>
+            Test entrypoint, will try to send vibration when the game loads a mission.
+            </summary>
+        </member>
+        <member name="T:NOCV.Patches.GearVibrationPatch">
+            <summary>
+                Adds vibration to all sorts of landing gear actions.
+            </summary>
+        </member>
+        <member name="M:NOCV.Patches.GearVibrationPatch.LatchSoundVibration(LandingGear)">
+            <summary>
+                Adds vibration to latch events.
+            </summary>
+            <param name="__instance"></param>
+        </member>
+        <member name="M:NOCV.Patches.GearVibrationPatch.FixedUpdateTranspiler(System.Collections.Generic.IEnumerable{HarmonyLib.CodeInstruction})">
+            <summary>
+            Transpiles fixed update to add vibration on tire noise and tire skid
+            </summary>
+            <param name="instructions"></param>
+            <returns></returns>
+        </member>
+        <member name="M:NOCV.Patches.GearVibrationPatch.OnsetGearTranspiler(System.Collections.Generic.IEnumerable{HarmonyLib.CodeInstruction})">
+            <summary>
+            Add vibrations to the gear in/out animation.
+            </summary>
+            <param name="instructions"></param>
+            <returns></returns>
+        </member>
+        <member name="T:NOCV.Patches.GunPatches">
+            <summary>
+            Adds vibration feedback on gunshots 
+            </summary>
+        </member>
+        <member name="M:NOCV.Patches.GunPatches.SpawnBulletPrefix(Gun,System.Single)">
+            <summary>
+                Vibration feedback on bullet spawn.
+            </summary>
+            <param name="__instance"></param>
+            <param name="timeOffset"></param>
+        </member>
+        <member name="T:NOCV.Patches.MountedMissilePatches">
+            <summary>
+            Add vibration to missile launches
+            </summary>
+        </member>
+        <member name="M:NOCV.Patches.MountedMissilePatches.FirePatch(MountedMissile,Unit,Unit,UnityEngine.Vector3,WeaponStation,GlobalPosition)">
+            <summary>
+            Add vibration on missile shots.
+            </summary>
+            <param name="__instance"></param>
+            <param name="owner"></param>
+            <param name="target"></param>
+            <param name="inheritedVelocity"></param>
+            <param name="weaponStation"></param>
+            <param name="aimpoint"></param>
+        </member>
+        <member name="T:NOCV.Patches.VRSWarningPatch">
+            <summary>
+            Adds vibration feedback to the VRS warning
+            </summary>
+        </member>
+        <member name="M:NOCV.Patches.VRSWarningPatch.RefreshTranspiler(System.Collections.Generic.IEnumerable{HarmonyLib.CodeInstruction})">
+            <summary>
+            Adds vibration feedback on Refresh of the VRS detector. 
+            </summary>
+            <param name="instructions"></param>
+            <returns></returns>
+        </member>
+        <member name="T:NOCV.PluginConfig">
+            <summary>
+            Plugin configuration class
+            </summary>
+        </member>
+    </members>
+</doc>
