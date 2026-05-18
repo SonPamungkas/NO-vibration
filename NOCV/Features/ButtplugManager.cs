@@ -118,6 +118,9 @@ public class ButtplugManager : MonoBehaviour
 
     private void OnDestroy()
     {
-        _client?.DisconnectAsync().Wait();
+        if (_client != null && _client.Connected)
+        {
+            Task.Run(() => _client.DisconnectAsync());
+        }
     }
 }
