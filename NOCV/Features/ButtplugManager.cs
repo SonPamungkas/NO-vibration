@@ -1,106 +1,123 @@
-<Project Sdk="Microsoft.NET.Sdk">
-    <PropertyGroup>
-        <NUCLEAR_OPTION_SERVER_REFERENCES>/home/pauel/.local/share/Steam/steamapps/common/Nuclear Option/NuclearOption_Data/Managed</NUCLEAR_OPTION_SERVER_REFERENCES>
-        <!-- General Project Information -->
-        <TargetFramework>net48</TargetFramework>
-        <AssemblyName>Pauel3312.NOControllerVibration</AssemblyName>
-        <RootNamespace>NOCV</RootNamespace>
-        <PackageId>Pauel3312.NOCV</PackageId>
-        <Title>NuclearOptionControllerVibration</Title>
-        <Description>A mod for exporting vibration data to controllers.</Description>
-        <Version>0.33.3.5</Version>
-        <Authors>Pauel3312</Authors>
-        <PackageTags>nuclear;option;bepinex</PackageTags>
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using ButtplugManaged;
+using UnityEngine;
 
-        <!-- Package Information -->
-        <PackageReadmeFile>README.md</PackageReadmeFile>
-        <PackageProjectUrl>https://github.com/pauel3312/NOControllerVibration</PackageProjectUrl>
-        <RepositoryUrl>https://github.com/pauel3312/NOControllerVibration</RepositoryUrl>
-        <RepositoryType>git</RepositoryType>
+namespace NOCV.Features;
 
-        <!-- Build Information -->
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <LangVersion>latest</LangVersion>
-        <Nullable>enable</Nullable>
+/// <summary>
+/// Connects to Intiface Central and distributes vibration commands to devices.
+/// </summary>
+public class ButtplugManager : MonoBehaviour
+{
+    public static ButtplugManager? Instance { get; private set; }
+    
+    private ButtplugClient? _client;
+    private readonly List<ButtplugClientDevice> _devices = new();
+    private readonly object _devicesLock = new(); // Thread safety for devices collection
+    
+    public float currentSpeed = 0f;
+    private float _timeSinceUpdate;
 
-        <!-- NuGet Information -->
-        <RestoreAdditionalProjectSources>
-            https://api.nuget.org/v3/index.json;
-            https://nuget.bepinex.dev/v3/index.json
-        </RestoreAdditionalProjectSources>
+    public static void Initialize()
+    {
+        if (Instance != null) return;
+        var go = new GameObject("ButtplugManager");
+        Instance = go.AddComponent<ButtplugManager>();
+        DontDestroyOnLoad(go);
+    }
 
-        <!-- Documentation -->
-        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    private void Start()
+    {
+        Task.Run(ConnectClient);
+    }
 
-        <!-- Prevent Publicizer Warnings from Showing -->
-        <NoWarn>$(NoWarn);CS0436</NoWarn>
+    private async Task ConnectClient()
+    {
+        if (_client != null)
+        {
+            _client.DeviceAdded -= OnDeviceAdded;
+            _client.DeviceRemoved -= OnDeviceRemoved;
+            if (_client.IsScanning) await _client.StopScanningAsync();
+            if (_client.Connected) await _client.DisconnectAsync();
+        }
 
-        <!-- Mod Destination -->
-        <ModDestination>$(NUCLEAR_OPTION_SERVER_REFERENCES)\..\..\BepInEx\plugins</ModDestination>
-    </PropertyGroup>
+        _client = new ButtplugClient("Nuclear Option Buttplug");
+        _client.DeviceAdded += OnDeviceAdded;
+        _client.DeviceRemoved += OnDeviceRemoved;
+        
+        _client.ErrorReceived += (sender, args) => 
+            NOCV.Logger.LogError($"Buttplug Error: {args.Exception.Message}");
+            
+        _client.ServerDisconnect += (sender, args) => 
+        {
+            NOCV.Logger.LogWarning("Buttplug server disconnected.");
+            lock (_devicesLock) { _devices.Clear(); }
+        };
 
-    <!-- Include README and CHANGELOG in the package -->
-    <ItemGroup>
-        <None Include="$(ProjectDir)../README.md" Pack="true" PackagePath="/"/>
-        <None Include="$(ProjectDir)../CHANGELOG.md" Pack="true" PackagePath="/"/>
-    </ItemGroup>
+        try
+        {
+            var uri = new Uri(PluginConfig.IntifaceUri.Value + "/buttplug");
+            NOCV.Logger.LogInfo($"Connecting to Intiface server at {uri}...");
+            
+            await _client.ConnectAsync(new ButtplugWebsocketConnectorOptions(uri));
+            await _client.StartScanningAsync();
+            
+            NOCV.Logger.LogInfo("Successfully connected to Intiface server and started scanning.");
+        }
+        catch (Exception ex)
+        {
+            NOCV.Logger.LogError($"Failed to connect to Intiface: {ex.Message}");
+        }
+    }
 
-    <!-- BepInEx Package References -->
-    <ItemGroup>
-        <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.3" PrivateAssets="all" ExcludeAssets="runtime"/>
-        <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all"/>
-        <PackageReference Include="BepInEx.Core" Version="5.*"/>
-        <PackageReference Include="BepInEx.PluginInfoProps" Version="1.*"/>
-    </ItemGroup>
+    private void OnDeviceAdded(object sender, DeviceAddedEventArgs args)
+    {
+        NOCV.Logger.LogInfo($"Device connected: {args.Device.Name}");
+        lock (_devicesLock)
+        {
+            _devices.Add(args.Device);
+        }
+    }
 
-    <!-- Nuclear Option-specific Assembly References -->
-    <ItemGroup>
-        <Reference Include="Assembly-CSharp" HintPath="$(NUCLEAR_OPTION_SERVER_REFERENCES)\Assembly-CSharp.dll" Private="False" Publicize="True">
-            <Aliases>global,NuclearOption</Aliases>
-        </Reference>
-        <Reference Include="Assembly-CSharp-firstpass" HintPath="$(NUCLEAR_OPTION_SERVER_REFERENCES)\Assembly-CSharp-firstpass.dll" Private="False" Publicize="True"/>
-        <Reference Include="UnityEngine" HintPath="$(NUCLEAR_OPTION_SERVER_REFERENCES)\UnityEngine.dll" Private="False" Publicize="True"/>
-        <Reference Include="UnityEngine.CoreModule" HintPath="$(NUCLEAR_OPTION_SERVER_REFERENCES)\UnityEngine.CoreModule.dll" Private="False" Publicize="True"/>
-        <Reference Include="UnityEngine.AudioModule" HintPath="$(NUCLEAR_OPTION_SERVER_REFERENCES)\UnityEngine.AudioModule.dll" Private="False" Publicize="True"/>
-        <Reference Include="UnityEngine.PhysicsModule" HintPath="$(NUCLEAR_OPTION_SERVER_REFERENCES)\UnityEngine.PhysicsModule.dll" Private="False" Publicize="True"/>
-        <Reference Include="UnityEngine.ParticleSystemModule" HintPath="$(NUCLEAR_OPTION_SERVER_REFERENCES)\UnityEngine.ParticleSystemModule.dll" Private="False" Publicize="True"/>
-        <Reference Include="UnityEngine.UI" HintPath="$(NUCLEAR_OPTION_SERVER_REFERENCES)\UnityEngine.UI.dll" Private="False" Publicize="True"/>
-        <Reference Include="UnityEngine.Rendering.Universal" HintPath="$(NUCLEAR_OPTION_SERVER_REFERENCES)\Unity.RenderPipelines.Universal.Runtime.dll" Private="False" Publicize="True"/>
-        <Reference Include="UnityEngine.JSONSerializeModule" HintPath="$(NUCLEAR_OPTION_SERVER_REFERENCES)\UnityEngine.JSONSerializeModule.dll" Private="False" Publicize="True"/>
-        <Reference Include="Rewired" HintPath="$(NUCLEAR_OPTION_SERVER_REFERENCES)\Rewired_Core.dll" Private="False" Publicize="True"/>
-        <Reference Include="UniTask" HintPath="$(NUCLEAR_OPTION_SERVER_REFERENCES)\UniTask.dll" Private="False" Publicize="True"/>
-        <Reference Include="Mirage" HintPath="$(NUCLEAR_OPTION_SERVER_REFERENCES)\Mirage.dll" Private="False" Publicize="True"/>
-        <Reference Include="Mirage.SocketLayer" HintPath="$(NUCLEAR_OPTION_SERVER_REFERENCES)\Mirage.SocketLayer.dll" Private="False" Publicize="True"/>
-        <Reference Include="Mirage.Sockets.Udp" HintPath="$(NUCLEAR_OPTION_SERVER_REFERENCES)\Mirage.Sockets.Udp.dll" Private="False" Publicize="True"/>
-        <Reference Include="Mirage.SteamworksSocket" HintPath="$(NUCLEAR_OPTION_SERVER_REFERENCES)\Mirage.SteamworksSocket.dll" Private="False" Publicize="True"/>
-        <Reference Include="Mirage.Authenticators" HintPath="$(NUCLEAR_OPTION_SERVER_REFERENCES)\Mirage.Authenticators.dll" Private="False" Publicize="True"/>
-        <Reference Include="Mirage.Components" HintPath="$(NUCLEAR_OPTION_SERVER_REFERENCES)\Mirage.Components.dll" Private="False" Publicize="True"/>
-        <Reference Include="com.rlabrecque.steamworks.net" HintPath="$(NUCLEAR_OPTION_SERVER_REFERENCES)\com.rlabrecque.steamworks.net.dll" Private="False" Publicize="True"/>
-    </ItemGroup>
+    private void OnDeviceRemoved(object sender, DeviceRemovedEventArgs args)
+    {
+        NOCV.Logger.LogInfo($"Device disconnected: {args.Device.Name}");
+        lock (_devicesLock)
+        {
+            _devices.Remove(args.Device);
+        }
+    }
 
-    <!-- Buttplug Integration -->
-    <ItemGroup>
-        <Reference Include="ButtplugManaged">
-            <HintPath>lib\ButtplugManaged.dll</HintPath>
-        </Reference>
-        <Reference Include="plog">
-            <HintPath>lib\plog.dll</HintPath>
-        </Reference>
-    </ItemGroup>
+    private void Update()
+    {
+        if (_client == null || !_client.Connected) return;
 
-    <!-- Extra Package References -->
-    <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
-        <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all"/>
-    </ItemGroup>
+        _timeSinceUpdate += Time.deltaTime;
+        
+        // Use a ~10Hz tick rate to avoid flooding Bluetooth devices with commands
+        if (_timeSinceUpdate > 0.1f)
+        {
+            float strength = Mathf.Clamp01(currentSpeed * PluginConfig.ButtplugStrength.Value);
+            
+            lock (_devicesLock)
+            {
+                foreach (var device in _devices)
+                {
+                    if (device.AllowedMessages.ContainsKey("VibrateCmd"))
+                    {
+                        device.SendVibrateCmd(strength);
+                    }
+                }
+            }
+            
+            _timeSinceUpdate = 0f;
+        }
+    }
 
-    <Target Name="PostBuild" AfterTargets="Build" Condition="'$(Configuration)' == 'Release' AND '$(ModDestination)' != ''">
-        <!-- Create an item for all .dll files in the output directory -->
-        <CreateItem Include="$(OutDir)*.dll">
-            <Output TaskParameter="Include" ItemName="DllFiles"/>
-        </CreateItem>
-
-        <!-- Copy the build output -->
-        <Message Text="Copying build output assemblies from $(OutDir)*.dll to $(ModDestination)\$(AssemblyName)" Importance="high"/>
-        <Copy SourceFiles="@(DllFiles)" DestinationFolder="$(ModDestination)\$(AssemblyName)"/>
-    </Target>
-</Project>
+    private void OnDestroy()
+    {
+        _client?.DisconnectAsync().Wait();
+    }
+}
