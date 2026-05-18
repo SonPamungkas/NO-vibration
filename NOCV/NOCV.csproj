@@ -24,7 +24,6 @@
         <Nullable>enable</Nullable>
 
         <!-- NuGet Information -->
-
         <RestoreAdditionalProjectSources>
             https://api.nuget.org/v3/index.json;
             https://nuget.bepinex.dev/v3/index.json
@@ -77,6 +76,16 @@
         <Reference Include="Mirage.Authenticators" HintPath="$(NUCLEAR_OPTION_SERVER_REFERENCES)\Mirage.Authenticators.dll" Private="False" Publicize="True"/>
         <Reference Include="Mirage.Components" HintPath="$(NUCLEAR_OPTION_SERVER_REFERENCES)\Mirage.Components.dll" Private="False" Publicize="True"/>
         <Reference Include="com.rlabrecque.steamworks.net" HintPath="$(NUCLEAR_OPTION_SERVER_REFERENCES)\com.rlabrecque.steamworks.net.dll" Private="False" Publicize="True"/>
+    </ItemGroup>
+
+    <!-- Buttplug Integration -->
+    <ItemGroup>
+        <Reference Include="ButtplugManaged">
+            <HintPath>lib\ButtplugManaged.dll</HintPath>
+        </Reference>
+        <Reference Include="plog">
+            <HintPath>lib\plog.dll</HintPath>
+        </Reference>
     </ItemGroup>
 
     <!-- Extra Package References -->
