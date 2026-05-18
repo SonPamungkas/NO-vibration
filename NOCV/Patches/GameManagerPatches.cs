@@ -21,8 +21,13 @@ public class GameManagerPatches
          {
              NOCV.Logger.LogDebug($"{controller._hardwareName}; has {controller.vibrationMotorCount} motors; {(controller.supportsVibration ? "supports vibration" : "Does not support vibration")}");
          }
+         
          VibOnAudioSources.Initialize();
          VibrationService.Initialize();
+         
+         // Start the Buttplug connection manager alongside the vibration service
+         ButtplugManager.Initialize(); 
+         
          AoAFeedbackPatch.Setup();
          BayDoorPatches.Setup();
          GearVibrationPatch.Setup();
@@ -33,4 +38,4 @@ public class GameManagerPatches
          AircraftMachPatch.Setup();
          DetachPartPatch.Setup();
      }
-}   
+}
